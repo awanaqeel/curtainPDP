@@ -1,0 +1,60 @@
+<div id="variantPopup" class="variant-popup" style="display: none;">
+  <div class="closeBtn">
+    <span id="closePopup" class="popup-close">&times;</span>
+  </div>
+  <div class="inner_content">
+    <div class="left_side">
+      <div class="popup-header">
+        <h2 class="popup-title">Choose Fabric</h2>
+      </div>
+
+      <!-- Fabric Swatches Grid -->
+      <div class="swatch-grid fabric-swatch-grid" id="fabricSwatches">
+        {% assign fabricArray = product.metafields.custom.fabric_name.value %}
+        {% for fabric in fabricArray %}
+          {% assign fabric_clean = fabric | strip %}
+          <div
+            class="custom-swatch fabric-swatch {% if forloop.first %}selected{% endif %}"
+            data-value="{{ fabric_clean }}"
+          >
+            <div
+              class="swatch-color"
+              style="background-image: url('https://cdn.shopify.com/s/files/1/0936/6919/6059/files/{{ fabric_clean | replace: ' ', '-' | downcase }}.png');"
+            >
+              <!-- comment -->
+            </div>
+            <div class="swatch-label">
+              {{ fabric_clean }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="right_side">
+      <div class="popup-header">
+        <h2 class="popup-title">Choose Colour</h2>
+      </div>
+
+      <!-- Color Swatches Grid -->
+      <div class="swatch-grid color-swatch-grid" id="colorSwatches">
+        {% assign colorArray = product.metafields.custom.color.value %}
+        {% for color in colorArray %}
+          {% assign color_clean = color | strip %}
+          <div
+            class="custom-swatch color-swatch {% if forloop.first %}selected{% endif %}"
+            data-value="{{ color_clean }}"
+          >
+            <div class="swatch-color bg_color-{{ color_clean | replace: ' ', '-' | downcase }}">
+              <!-- comment -->
+            </div>
+            <div class="swatch-label">
+              {{ color_clean }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <button id="applySelection" type="button" class="apply-button">Confirm Choices</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,255 @@
+<div class="custom_variant_select">
+  <div id="fabricButton" class="variant-button product-form__input product-form__input--dropdown">
+    <label class="form__label">Fabric:</label>
+    <div class="select">
+      <span class="fabricButttonValue"></span>
+      <span class="svg-wrapper">&#8250;</span>
+    </div>
+  </div>
+</div>
+<div class="custom_variant_select">
+  <div id="colorButton" class="variant-button product-form__input product-form__input--dropdown">
+    <label class="form__label">Colour:</label>
+    <div class="select">
+      <span class="colorButttonValue"></span>
+      <span class="svg-wrapper">&#8250;</span>
+    </div>
+  </div>
+</div>
+
+{% assign widthData = product.metafields.custom.width_data.value | parse_json %}
+{% assign pricingData = product.metafields.custom.pricing_data.value | parse_json %}
+<div class="custom_variant_select">
+  <div class="product-form__input product-form__input--dropdown">
+    <label class="form__label" for="Option-Width"> Width :</label>
+    <div class="select">
+      <select id="Option-Width" class="select__select" name="options[width]">
+        {% for width in widthData.WidthData %}
+          <option data-panelqty="{{ width.PanelQTY }}" data-width="{{ width.Width }}">
+            {{ width.Width }}
+          </option>
+        {% endfor %}
+      </select>
+      <span class="svg-wrapper">
+        {{ 'icon-caret.svg' | inline_asset_content }}
+      </span>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get the width dropdown element.
+    var selectElement = document.getElementById('Option-Width');
+    if (!selectElement) return;
+
+    // Function to refresh references to DOM elements that might get replaced.
+    function refreshElements() {
+      return {
+        buttonSpan: document.querySelector('.custom_pr_form_submit span'),
+        widthField: document.getElementById('width_selected'),
+        quantity_inputField: document.querySelector('.quantity__input'),
+        dropVariantElement: document.querySelector('.dropVariantdropdown')
+      };
+    }
+
+    var elements = refreshElements();
+    if (!elements.buttonSpan || !elements.widthField || !elements.quantity_inputField || !elements.dropVariantElement) return;
+
+    // Store the base button text in a data attribute (if not already stored).
+    if (!elements.buttonSpan.getAttribute('data-base-text')) {
+      elements.buttonSpan.setAttribute('data-base-text', elements.buttonSpan.innerText.replace(/(\s-\s.*)$/, ''));
+    }
+
+    // Load pricing table from the parsed metafield JSON (output as a JS object)
+    var pricingTable = ({{ pricingData.pricingTable | json }}) || [];
+    var isUpdating = false; // Flag to prevent infinite loops
+
+    // Function to extract the price prefix using the pricing table.
+    function getPricePrefix(selectEl, dropVariantEl) {
+      if (!pricingTable || pricingTable.length === 0) return "";
+      var selectedWidthOption = selectEl.options[selectEl.selectedIndex];
+      var panelQty = selectedWidthOption.getAttribute('data-panelqty');
+      var dropVariantValue = dropVariantEl.options[dropVariantEl.selectedIndex].value.trim();
+
+      // Find the pricing entry matching the panelQty from the width dropdown.
+      var pricingEntry = pricingTable.find(function(item) {
+        return parseInt(item.PanelQTY) === parseInt(panelQty);
+      });
+
+      if (pricingEntry && pricingEntry.dropValues && pricingEntry.dropValues.length > 0) {
+        // Find the matching drop value.
+        var matchedDrop = pricingEntry.dropValues.find(function(drop) {
+          return drop.dropValue.trim() === dropVariantValue;
+        });
+        if (matchedDrop) {
+          return " - Rs." + matchedDrop.finalPrice;
+        }
+      }
+      return "";
+    }
+
+    // Update the hidden width input field.
+    function updateHiddenWidth(widthField, selectEl) {
+      var selectedOption = selectEl.options[selectEl.selectedIndex];
+      if (widthField) {
+        widthField.value = selectedOption.text.trim();
+      }
+    }
+
+    // Update the button text and quantity input.
+    function updateButtonText() {
+      isUpdating = true;
+      var elems = refreshElements();
+      if (!elems.buttonSpan || !elems.quantity_inputField || !elems.dropVariantElement) {
+        isUpdating = false;
+        return;
+      }
+      // Ensure buttonSpan has the base text stored.
+      if (!elems.buttonSpan.getAttribute('data-base-text')) {
+        elems.buttonSpan.setAttribute('data-base-text', elems.buttonSpan.innerText.replace(/(\s-\s.*)$/, ''));
+      }
+      var baseText = elems.buttonSpan.getAttribute('data-base-text');
+      var newText = baseText + getPricePrefix(selectElement, elems.dropVariantElement);
+      if (elems.buttonSpan.innerText !== newText) {
+        elems.buttonSpan.innerText = newText;
+      }
+      var selectedOption = selectElement.options[selectElement.selectedIndex];
+      var panelQty = selectedOption.getAttribute('data-panelqty');
+      elems.quantity_inputField.value = parseInt(panelQty);
+      isUpdating = false;
+    }
+
+    function updateAll() {
+      updateButtonText();
+      var elems = refreshElements();
+      updateHiddenWidth(elems.widthField, selectElement);
+    }
+
+    // Use event delegation for change events on both dropdowns.
+    document.addEventListener('change', function(e) {
+      if (e.target && (e.target.id === 'Option-Width' || e.target.classList.contains('dropVariantdropdown'))) {
+        setTimeout(updateAll, 200);
+      }
+    });
+
+    // Listen to Shopify's variant change event if available.
+    var productForm = document.querySelector('form[action^="/cart"]');
+    if (productForm) {
+      productForm.addEventListener('variant:change', function() {
+        setTimeout(updateAll, 200);
+      });
+    }
+
+    // MutationObserver to catch external changes in the button container.
+    var container = document.querySelector('.custom_pr_form_submit');
+    if (container) {
+      var observer = new MutationObserver(function(mutations) {
+        if (!isUpdating) {
+          updateAll();
+        }
+      });
+      observer.observe(container, { childList: true, subtree: true });
+    }
+
+    // Initial update on page load.
+    updateAll();
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      var fabricButton = document.getElementById('fabricButton');
+      var fabricButtonText = document.querySelector('.fabricButttonValue');
+      var colorButtonText = document.querySelector('.colorButttonValue');
+      var colorButton = document.getElementById('colorButton');
+      var popup = document.getElementById('variantPopup');
+      var closePopup = document.getElementById('closePopup');
+      var applyButton = document.getElementById('applySelection');
+     var colourField = document.getElementById('colour_selected');
+     var fabricField = document.getElementById('fabric_selected');
+
+      // 1. On first load, set default swatches on the buttons.
+      function setDefaultSwatches() {
+        var selectedFabricSwatch = document.querySelector('#fabricSwatches .custom-swatch.selected');
+        var selectedColorSwatch = document.querySelector('#colorSwatches .custom-swatch.selected');
+
+        if (selectedFabricSwatch) {
+          var fabricValue = selectedFabricSwatch.getAttribute('data-value');
+          fabricButtonText.innerText = fabricValue;
+          fabricField.value = fabricValue;
+        }
+        if (selectedColorSwatch) {
+          var colorValue = selectedColorSwatch.getAttribute('data-value');
+          colorButtonText.innerText =  colorValue;
+          colourField.value = colorValue;
+        }
+      }
+
+      // 2. Open the popup and disable body scroll and pointer events
+      function openPopup() {
+        popup.style.display = 'flex';
+        // Disable scrolling and pointer events on body
+        document.body.style.overflow = 'hidden';
+        document.body.style.pointerEvents = 'none';
+        // Ensure popup itself remains interactive
+        popup.style.pointerEvents = 'auto';
+      }
+
+      if (fabricButton) {
+        fabricButton.addEventListener('click', openPopup);
+      }
+      if (colorButton) {
+        colorButton.addEventListener('click', openPopup);
+      }
+
+      // 3. Close the popup and restore body scroll and pointer events
+      function closeThePopup() {
+        popup.style.display = 'none';
+        document.body.style.overflow = '';
+        document.body.style.pointerEvents = 'auto';
+      }
+
+      closePopup.addEventListener('click', closeThePopup);
+
+      // 4. Highlight selected swatch on click
+      function handleSwatchClick(event) {
+        var swatch = event.currentTarget;
+        var parentGrid = swatch.closest('.swatch-grid');
+
+        // Remove "selected" from all siblings in this grid
+        parentGrid.querySelectorAll('.custom-swatch').forEach(function(s) {
+          s.classList.remove('selected');
+        });
+        // Mark the clicked swatch as selected
+        swatch.classList.add('selected');
+      }
+
+      // Attach click handlers to all swatches
+      document.querySelectorAll('.custom-swatch').forEach(function(swatch) {
+        swatch.addEventListener('click', handleSwatchClick);
+      });
+
+      // 5. On Apply button click, update button text and close popup.
+      applyButton.addEventListener('click', function() {
+        var selectedFabricSwatch = document.querySelector('#fabricSwatches .custom-swatch.selected');
+        var selectedColorSwatch = document.querySelector('#colorSwatches .custom-swatch.selected');
+
+        if (selectedFabricSwatch) {
+          var fabricValue = selectedFabricSwatch.getAttribute('data-value');
+          fabricButtonText.innerText = fabricValue;
+          fabricField.value = fabricValue;
+        }
+        if (selectedColorSwatch) {
+          var colorValue = selectedColorSwatch.getAttribute('data-value');
+          colorButtonText.innerText =  colorValue;
+          colourField.value = colorValue;
+        }
+
+        closeThePopup();
+      });
+
+      // 6. Initialize default swatch texts on page load
+      setDefaultSwatches();
+
+    });
+</script>
