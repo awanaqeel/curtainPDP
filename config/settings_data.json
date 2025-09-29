@@ -148,6 +148,13 @@
         "settings": {
           "enable": true
         }
+      },
+      "5824559721413948574": {
+        "type": "shopify://apps/speed-optimization/blocks/head-embed/01999533-9a01-781b-b218-6fbe833420a4",
+        "disabled": false,
+        "settings": {
+          "enable": true
+        }
       }
     },
     "color_schemes": {
