@@ -12,6 +12,10 @@
     "main": {
       "type": "main-product",
       "blocks": {
+        "price_yFTYQ3": {
+          "type": "price",
+          "settings": {}
+        },
         "title": {
           "type": "title",
           "settings": {}
@@ -48,6 +52,7 @@
         }
       },
       "block_order": [
+        "price_yFTYQ3",
         "title",
         "sku_eg3kfb",
         "description",
